@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
 # Zet alles klaar om in dit project met de stamboom-MCP's te werken.
 #
-#   ./setup.sh              # volledige installatie (idempotent)
-#   ./setup.sh --update     # tools bijwerken + herbouwen
-#   ./setup.sh --check      # alleen healthcheck
-#   ./setup.sh --no-skills  # sla de superpowers-skills over
+#   ./setup.sh                # volledige installatie (idempotent)
+#   ./setup.sh --update       # tools bijwerken + herbouwen
+#   ./setup.sh --check        # alleen healthcheck
+#   ./setup.sh --skip-extra   # alleen de git-tools (geen OCR/kraken/playwright/skills)
 #
 # Herhaald draaien is veilig: wat bestaat blijft staan, wat ontbreekt wordt gemaakt.
 
 set -euo pipefail
 # shellcheck source=bin/_common.sh
-. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin/_common.sh"
 
 MODE="setup"
 NO_SKILLS=0
 for arg in "$@"; do
     case "$arg" in
-        --check)     MODE="check" ;;
-        --update)    MODE="update" ;;
-        --no-skills) NO_SKILLS=1 ;;
-        -h|--help)   sed -n '2,10p' "$0"; exit 0 ;;
-        *)           die "onbekende optie: $arg" ;;
+        --check)      MODE="check" ;;
+        --update)     MODE="update" ;;
+        --skip-extra) NO_SKILLS=1 ;;
+        --no-skills)  NO_SKILLS=1 ;;
+        -h|--help)    sed -n '2,11p' "$0"; exit 0 ;;
+        *)            die "onbekende optie: $arg" ;;
     esac
 done
 
