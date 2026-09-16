@@ -1,16 +1,20 @@
 # stamboom-template
 
-Basisrepo voor een nieuw genealogisch onderzoek. Je kloont hem als **GitHub template**
-(niet als clone) zodat elk onderzoek met een verse historie begint, en draait één
-setup-commando.
+Basisrepo voor een nieuw genealogisch onderzoek. Je maakt er via GitHub een
+**template-kopie** van, zodat elk onderzoek met een verse historie begint, en draait
+één setup-commando.
 
 ## Snelstart op een nieuwe machine
 
 ```bash
-gh repo create mijn-onderzoek --template harrywesterman/stamboom-template --private
+gh repo create mijn-onderzoek --template harrywesterman/stamboom-template --private --clone
 cd mijn-onderzoek
 ./setup.sh
 ```
+
+> **`--clone` is verplicht.** Zonder die vlag maakt `gh` alleen de remote repository aan
+> en heb je lokaal geen map om in te werken. Ben je dat vergeten, dan haal je de repo alsnog
+> op met `gh repo clone harrywesterman/mijn-onderzoek`.
 
 `setup.sh` doet alles: MCP-tools installeren, secrets controleren, de configuratie voor
 opencode/codex/Claude Code genereren, skills installeren en een healthcheck draaien.

@@ -113,7 +113,7 @@ template; fase 5 publiceert; fase 6 (migratie) staat apart.
 ### T13. Publiceren
 - `gh repo create harrywesterman/stamboom-template --private --source=. --push`
 - Repo instelling **"Template repository"** aanzetten.
-- **Verificatie:** `gh repo create test-$(date +%s) --template harrywesterman/stamboom-template`
+- **Verificatie:** `gh repo create test-$(date +%s) --template harrywesterman/stamboom-template --clone`
   -> verse repo met één commit; `./setup.sh --check` groen.
 
 ---

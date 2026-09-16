@@ -15,10 +15,12 @@ start met een **verse historie** (template, niet clonen) en werkt op **elke mach
 Op een nieuwe machine:
 
 ```
-gh repo create mijn-onderzoek --template harrywesterman/stamboom-template --private
+gh repo create mijn-onderzoek --template harrywesterman/stamboom-template --private --clone
 cd mijn-onderzoek
 ./setup.sh          # installeert tools, secrets-check, rendert configs, healthcheck
 ```
+
+`--clone` is verplicht: zonder die vlag bestaat alleen de remote en is er lokaal geen map.
 
 Daarna werkt opencode (en codex/Claude Code) direct met alle MCP's, zonder handmatig
 configureren. `./setup.sh` is idempotent: opnieuw draaien = tools updaten.
