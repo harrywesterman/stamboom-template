@@ -1,0 +1,139 @@
+{
+  "_comment": "ENIGE bron van waarheid voor MCP-servers en de tools die ze nodig hebben. Placeholders: ${TOOLS_DIR} ${HOME} ${WEBTREES_URL} ${WEBTREES_TREE} ${UPLOAD_ROOTS} ${OCR_MODELS} ${CHROME_PATH}. ${TOKEN} wordt NIET door de renderer ingevuld maar per client als env-referentie geemit.",
+  "_vars": {
+    "TOOLS_DIR": "${TOOLS_DIR:-$HOME/.local/share/stamboom-tools}",
+    "WEBTREES_URL": "${WEBTREES_URL:-https://www.stamboomwesterman.net}",
+    "WEBTREES_TREE": "${WEBTREES_TREE:-tree1}",
+    "UPLOAD_ROOTS": "${UPLOAD_ROOTS:-/tmp:${HOME}/Documents:${HOME}/Downloads:${HOME}/Pictures}",
+    "OCR_MODELS": "${OCR_MODELS:-${HOME}/ocr-models}",
+    "CHROME_PATH": "${CHROME_PATH-}"
+  },
+
+  "tools": {
+    "webtrees-API": {
+      "repo": "git@github.com:harrywesterman/webtrees-API.git",
+      "dir": "webtrees-API",
+      "ref": "master",
+      "update": "pull",
+      "build": null,
+      "entry": "bin/webtrees-mcp.mjs",
+      "note": "Eigen fork van Jefferson49/webtrees-API. bin/webtrees-mcp.mjs gebruikt alleen Node-builtins, dus geen npm install nodig."
+    },
+    "familysearch-mcp": {
+      "repo": "git@github.com:harrywesterman/familysearch-mcp.git",
+      "dir": "familysearch-mcp",
+      "ref": "improvement",
+      "update": "pull",
+      "build": "npm ci && npm run build",
+      "entry": "build/index.js",
+      "note": "Eigen fork. De verbeteringen staan op branch 'improvement', niet op 'main'."
+    },
+    "newspapers-mcp": {
+      "repo": "https://github.com/raphink/newspapers-mcp.git",
+      "dir": "newspapers-mcp",
+      "ref": "769e74bbe726b0116d447e3728c5f30f7d0acb02",
+      "update": "pin",
+      "build": "npm ci && npm run build",
+      "entry": "build/index.js",
+      "note": "Upstream, gepind op de geteste commit."
+    },
+    "nl-gov-mcp": {
+      "repo": "https://github.com/WAINUTAI/NL-GOV-MCP.git",
+      "dir": "nl-gov-mcp",
+      "ref": "8ba92d75b5c9b6221b8c87fff5ecc932f95ef122",
+      "update": "pin",
+      "build": "npm ci && npm run build",
+      "entry": "dist/src/index.js",
+      "note": "Upstream, gepind op de geteste commit."
+    }
+  },
+
+  "extra_installs": {
+    "ocr": {
+      "kind": "pipx",
+      "package": "mcp-ocr",
+      "note": "Levert het commando mcp-ocr in ~/.local/bin."
+    },
+    "kraken": {
+      "kind": "python-venv",
+      "python": "3.13",
+      "venv": "${OCR_MODELS}/.venv-kraken",
+      "packages": ["kraken"],
+      "note": "Kraken werkt NIET op Python 3.14; gebruik 3.13 via uv."
+    },
+    "arletta-models": {
+      "kind": "remotezip",
+      "url": "https://zenodo.org/api/records/11191457",
+      "files": ["super.mlmodel", "blla.mlmodel"],
+      "dest": "${OCR_MODELS}/ARletta/models",
+      "note": "Alleen de ~21 MB modellen ophalen, niet de 8,5 GB zip."
+    },
+    "playwright-chromium": {
+      "kind": "npx",
+      "command": "npx playwright install chromium",
+      "note": "Nodig voor de Playwright-MCP en voor de FamilySearch browser-login."
+    },
+    "superpowers": {
+      "kind": "git",
+      "repo": "https://github.com/obra/superpowers.git",
+      "dest": "${HOME}/.config/opencode/superpowers",
+      "symlinks": {
+        "${HOME}/.config/opencode/skills/superpowers": "skills",
+        "${HOME}/.config/opencode/plugins/superpowers.js": ".opencode/plugins/superpowers.js"
+      },
+      "note": "Skills voor opencode."
+    }
+  },
+
+  "servers": {
+    "webtrees-mcp-server": {
+      "type": "local",
+      "command": ["node", "${TOOLS_DIR}/webtrees-API/bin/webtrees-mcp.mjs"],
+      "environment": {
+        "WEBTREES_MCP_URL": "${WEBTREES_URL}/mcp",
+        "WEBTREES_UPLOAD_ROOTS": "${UPLOAD_ROOTS}",
+        "TOKEN": "${TOKEN}"
+      },
+      "timeout": 180000,
+      "enabled": true
+    },
+    "familysearch": {
+      "type": "local",
+      "command": ["node", "${TOOLS_DIR}/familysearch-mcp/build/index.js"],
+      "environment": {
+        "BRAVE_PATH": "${CHROME_PATH}"
+      },
+      "enabled": true
+    },
+    "newspapers": {
+      "type": "local",
+      "command": ["node", "${TOOLS_DIR}/newspapers-mcp/build/index.js"],
+      "enabled": true
+    },
+    "nl-gov-mcp": {
+      "type": "local",
+      "command": ["node", "${TOOLS_DIR}/nl-gov-mcp/dist/src/index.js"],
+      "enabled": true
+    },
+    "ocr": {
+      "type": "local",
+      "command": ["${HOME}/.local/bin/mcp-ocr"],
+      "enabled": true
+    },
+    "openarchieven": {
+      "type": "remote",
+      "url": "https://mcp.openarchieven.nl/",
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": true
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "enabled": true
+    }
+  }
+}

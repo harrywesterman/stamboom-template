@@ -1,0 +1,25 @@
+# Secrets — nooit committen
+secrets.env
+.env
+*.local
+
+# Gegenereerde client-configuratie (bevat absolute machinepaden)
+/opencode.json
+/opencode.jsonc
+/.mcp.json
+/.codex/config.toml
+
+# Gekloonde/gebouwde tools binnen het project (horen in TOOLS_DIR, niet hier)
+node_modules/
+__pycache__/
+*.pyc
+
+# Onderzoeksrommel
+.DS_Store
+*.log
+tmp/
+.playwright-mcp/
+
+# Grote scans horen in Git LFS; dit is een vangnet
+*.tif
+*.tiff
