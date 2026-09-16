@@ -14,37 +14,52 @@ set -euo pipefail
 # shellcheck source=bin/_common.sh
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
 
-ask() { # ask <varname> <prompt> <default>  — herhaalt tot er iets is ingevuld
-    local __var="$1" __prompt="$2" __default="${3:-}" __input=""
-    if [ -n "${!__var:-}" ]; then
-        ok "$__var = ${!__var} (overgenomen)"
+# Zonder terminal niet aan prompts beginnen: dan wacht `read` voor altijd.
+INTERACTIVE=0
+[ -t 0 ] && INTERACTIVE=1
+
+# `${!var+x}` onderscheidt "expliciet leeg" van "niet gezet"; een lege waarde uit
+# project.env telt dus als ingevuld en levert geen prompt op.
+_is_set() { [ "${!1+x}" = "x" ]; }
+
+_ask() { # _ask <varname> <prompt> <default> <verplicht:0|1>
+    local __var="$1" __prompt="$2" __default="${3:-}" __required="$4" __input=""
+
+    if _is_set "$__var" && [ "$__required" = "0" ]; then
+        ok "$__var = ${!__var:-<leeg>}"
         return 0
     fi
+    if _is_set "$__var" && [ -n "${!__var}" ]; then
+        ok "$__var = ${!__var}"
+        return 0
+    fi
+
+    if [ "$INTERACTIVE" = "0" ]; then
+        printf -v "$__var" '%s' "${!__var:-$__default}"
+        if [ -n "${!__var}" ]; then
+            ok "$__var = ${!__var}"
+        elif [ "$__required" = "1" ]; then
+            die "$__var is niet gezet (niet-interactief)"
+        else
+            ok "$__var = <leeg>"
+        fi
+        return 0
+    fi
+
     if [ -n "$__default" ]; then
         read -r -p "$__prompt [$__default]: " __input || true
         __input="${__input:-$__default}"
     else
-        while [ -z "$__input" ]; do
+        while :; do
             read -r -p "$__prompt: " __input || true
+            [ -n "$__input" ] || [ "$__required" = "0" ] && break
         done
     fi
     printf -v "$__var" '%s' "$__input"
 }
 
-ask_opt() { # ask_opt <varname> <prompt> [default]  — leeg laten mag
-    local __var="$1" __prompt="$2" __default="${3:-}" __input=""
-    if [ -n "${!__var:-}" ]; then
-        ok "$__var = ${!__var} (overgenomen)"
-        return 0
-    fi
-    if [ -n "$__default" ]; then
-        read -r -p "$__prompt [$__default, leeg mag]: " __input || true
-        __input="${__input:-$__default}"
-    else
-        read -r -p "$__prompt (leeg laten mag): " __input || true
-    fi
-    printf -v "$__var" '%s' "$__input"
-}
+ask()     { _ask "$1" "$2" "${3:-}" 1; }
+ask_opt() { _ask "$1" "$2" "${3:-}" 0; }
 
 log "projectgegevens"
 ask WEBTREES_TREE "webtrees-boomnaam (bestandsnaam)" "tree1"
