@@ -4,7 +4,7 @@
 #   ./setup.sh                # volledige installatie (idempotent)
 #   ./setup.sh --update       # tools bijwerken + herbouwen
 #   ./setup.sh --check        # alleen healthcheck
-#   ./setup.sh --skip-extra   # alleen de git-tools (geen OCR/kraken/playwright/skills)
+#   ./setup.sh --skip-extra   # alleen de git-tools (geen OCR/kraken/playwright)
 #
 # Herhaald draaien is veilig: wat bestaat blijft staan, wat ontbreekt wordt gemaakt.
 
@@ -13,13 +13,12 @@ set -euo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin/_common.sh"
 
 MODE="setup"
-NO_SKILLS=0
+SKIP_EXTRA=0
 for arg in "$@"; do
     case "$arg" in
         --check)      MODE="check" ;;
         --update)     MODE="update" ;;
-        --skip-extra) NO_SKILLS=1 ;;
-        --no-skills)  NO_SKILLS=1 ;;
+        --skip-extra) SKIP_EXTRA=1 ;;
         -h|--help)    sed -n '2,11p' "$0"; exit 0 ;;
         *)            die "onbekende optie: $arg" ;;
     esac
@@ -104,9 +103,9 @@ check_prereqs
 check_secrets
 
 if [ "$MODE" = "update" ]; then
-    "$ROOT/bin/install-tools.sh" --update $([ "$NO_SKILLS" = "1" ] && echo --skip-extra)
+    "$ROOT/bin/install-tools.sh" --update $([ "$SKIP_EXTRA" = "1" ] && echo --skip-extra)
 else
-    if [ "$NO_SKILLS" = "1" ]; then
+    if [ "$SKIP_EXTRA" = "1" ]; then
         "$ROOT/bin/install-tools.sh" --skip-extra
     else
         "$ROOT/bin/install-tools.sh"

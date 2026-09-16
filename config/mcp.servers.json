@@ -72,16 +72,6 @@
       "kind": "npx",
       "command": "npx playwright install chromium",
       "note": "Nodig voor de Playwright-MCP en voor de FamilySearch browser-login."
-    },
-    "superpowers": {
-      "kind": "git",
-      "repo": "https://github.com/obra/superpowers.git",
-      "dest": "${HOME}/.config/opencode/superpowers",
-      "symlinks": {
-        "${HOME}/.config/opencode/skills/superpowers": "skills",
-        "${HOME}/.config/opencode/plugins/superpowers.js": ".opencode/plugins/superpowers.js"
-      },
-      "note": "Skills voor opencode."
     }
   },
 

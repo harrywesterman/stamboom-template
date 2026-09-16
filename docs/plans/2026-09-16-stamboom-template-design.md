@@ -6,7 +6,7 @@
 ## Doel
 
 Eén GitHub **template repository** waaruit elk nieuw genealogisch onderzoek vertrekt, met
-alle MCP-servers, skills, agent-config en werkwijze vooraf ingesteld. Een nieuw project
+alle MCP-servers, agent-config en werkwijze vooraf ingesteld. Een nieuw project
 start met een **verse historie** (template, niet clonen) en werkt op **elke machine**
 (macOS/Linux/WSL) met één setup-commando.
 
@@ -28,7 +28,7 @@ configureren. `./setup.sh` is idempotent: opnieuw draaien = tools updaten.
 ## Architectuur — drie lagen
 
 1. **`stamboom-template`** (GitHub, bron van waarheid) — config, `setup.sh`, `AGENTS.md`,
-   `docs/werkwijze/`, skills-hook.
+   `docs/werkwijze/`.
 2. **`~/.local/share/stamboom-tools/`** (machine-breed, gedeeld over alle projecten) —
    de MCP-repo's, gekloond en gebouwd door `setup.sh`.
 3. **`<project>/`** (de template-kloon) — `AGENTS.md`, `docs/onderzoek/*`, scans, notities.
@@ -96,8 +96,9 @@ Eén env-secret in de praktijk:
 
 ## Skills
 
-`setup.sh` installeert `obra/superpowers` (v4.3.0) in `~/.config/opencode/superpowers` en
-maakt de twee symlinks die opencode nodig heeft: `skills` en `plugins/superpowers.js`.
+Vervallen. In het oorspronkelijke ontwerp installeerde `setup.sh` `obra/superpowers` in
+`~/.config/opencode/superpowers` met twee symlinks. Dat is er weer uit gehaald: de template
+installeert alleen nog de MCP-tools, OCR en Playwright.
 
 ## Nieuwe AGENTS.md — structuur
 

@@ -119,7 +119,7 @@ else
     warn "modellen ophalen mislukt (kraken-OCR werkt pas daarna)"
 fi
 
-# --- Playwright + skills ----------------------------------------------------
+# --- Playwright -------------------------------------------------------------
 
 log "Playwright chromium"
 if [ "$MODE" = "update" ] || ! ls "$HOME/Library/Caches/ms-playwright" "$HOME/.cache/ms-playwright" 2>/dev/null | grep -q chromium; then
@@ -127,26 +127,6 @@ if [ "$MODE" = "update" ] || ! ls "$HOME/Library/Caches/ms-playwright" "$HOME/.c
         && ok "chromium aanwezig" || warn "playwright chromium installeren mislukt"
 else
     skip "chromium aanwezig"
-fi
-
-log "superpowers (skills)"
-SP_DIR="$HOME/.config/opencode/superpowers"
-if [ ! -d "$SP_DIR/.git" ]; then
-    git clone --quiet https://github.com/obra/superpowers.git "$SP_DIR" \
-        && ok "gekloond in $SP_DIR" || warn "superpowers klonen mislukt"
-elif [ "$MODE" = "update" ]; then
-    git -C "$SP_DIR" pull --ff-only --quiet && ok "superpowers bijgewerkt" \
-        || skip "superpowers ongewijzigd"
-else
-    skip "superpowers aanwezig"
-fi
-
-if [ -d "$SP_DIR" ]; then
-    mkdir -p "$HOME/.config/opencode/skills" "$HOME/.config/opencode/plugins"
-    ln -sfn "$SP_DIR/skills" "$HOME/.config/opencode/skills/superpowers"
-    ln -sfn "$SP_DIR/.opencode/plugins/superpowers.js" \
-        "$HOME/.config/opencode/plugins/superpowers.js"
-    ok "symlinks gezet"
 fi
 
 log "klaar"

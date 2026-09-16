@@ -62,9 +62,8 @@ template; fase 5 publiceert; fase 6 (migratie) staat apart.
 
 ### T7. `setup.sh`
 - Orkestreert: prereq-check -> secrets-check -> `install-tools.sh` -> `render-config.mjs`
-  -> superpowers clonen (`obra/superpowers`) + symlinks (`skills`, `plugins/superpowers.js`)
   -> `init-project.sh` (alleen als placeholders nog leeg zijn) -> `doctor.sh`.
-- Vlaggen: `--check` (alleen doctor), `--update` (alleen tools), `--no-skills`.
+- Vlaggen: `--check` (alleen doctor), `--update` (alleen tools), `--skip-extra`.
 - **Verificatie:** verse checkout -> `./setup.sh` eindigt met doctor-rapport.
 
 ---

@@ -17,7 +17,7 @@ cd mijn-onderzoek
 > op met `gh repo clone harrywesterman/mijn-onderzoek`.
 
 `setup.sh` doet alles: MCP-tools installeren, secrets controleren, de configuratie voor
-opencode/codex/Claude Code genereren, skills installeren en een healthcheck draaien.
+opencode/codex/Claude Code genereren en een healthcheck draaien.
 Opnieuw draaien is veilig en werkt de tools bij.
 
 ## Wat het oplevert
