@@ -14,7 +14,7 @@ set -euo pipefail
 # shellcheck source=bin/_common.sh
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"
 
-ask() { # ask <varname> <prompt> <default>
+ask() { # ask <varname> <prompt> <default>  — herhaalt tot er iets is ingevuld
     local __var="$1" __prompt="$2" __default="${3:-}" __input=""
     if [ -n "${!__var:-}" ]; then
         ok "$__var = ${!__var} (overgenomen)"
@@ -31,11 +31,26 @@ ask() { # ask <varname> <prompt> <default>
     printf -v "$__var" '%s' "$__input"
 }
 
+ask_opt() { # ask_opt <varname> <prompt> [default]  — leeg laten mag
+    local __var="$1" __prompt="$2" __default="${3:-}" __input=""
+    if [ -n "${!__var:-}" ]; then
+        ok "$__var = ${!__var} (overgenomen)"
+        return 0
+    fi
+    if [ -n "$__default" ]; then
+        read -r -p "$__prompt [$__default, leeg mag]: " __input || true
+        __input="${__input:-$__default}"
+    else
+        read -r -p "$__prompt (leeg laten mag): " __input || true
+    fi
+    printf -v "$__var" '%s' "$__input"
+}
+
 log "projectgegevens"
 ask WEBTREES_TREE "webtrees-boomnaam (bestandsnaam)" "tree1"
 ask WEBTREES_URL  "webtrees-URL" "https://www.stamboomwesterman.net"
-ask ROOT_XREF     "root-persoon XREF (bv. I1)" ""
-ask ROOT_NAME     "root-persoon naam" ""
+ask_opt ROOT_NAME "root-persoon naam" ""
+ask_opt ROOT_XREF "root-persoon XREF (bv. I1 — leeg als nog niet bekend)" ""
 
 cat > "$ROOT/config/project.env" <<EOF
 # Projectgegevens — automatisch geschreven door bin/init-project.sh.
@@ -49,11 +64,15 @@ ok "geschreven: config/project.env"
 STB_TREE="$WEBTREES_TREE" STB_URL="$WEBTREES_URL" STB_XREF="$ROOT_XREF" STB_NAME="$ROOT_NAME" \
 node -e '
 const fs = require("fs");
+const name = process.env.STB_NAME || "(nog niet bepaald)";
+const xref = process.env.STB_XREF;
 const map = {
+  // Eerst het samengestelde patroon, zodat een lege XREF geen "()" achterlaat.
+  "{{ROOT_NAME}} ({{ROOT_XREF}})": xref ? `${name} (${xref})` : name,
+  "{{ROOT_NAME}}": name,
+  "{{ROOT_XREF}}": xref || "(nog niet bekend)",
   "{{TREE}}": process.env.STB_TREE,
   "{{WEBTREES_URL}}": process.env.STB_URL,
-  "{{ROOT_XREF}}": process.env.STB_XREF,
-  "{{ROOT_NAME}}": process.env.STB_NAME,
 };
 for (const file of process.argv.slice(1)) {
   if (!fs.existsSync(file)) continue;
