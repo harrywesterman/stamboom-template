@@ -67,13 +67,15 @@ ask WEBTREES_URL  "webtrees-URL" "https://www.stamboomwesterman.net"
 ask_opt ROOT_NAME "root-persoon naam" ""
 ask_opt ROOT_XREF "root-persoon XREF (bv. I1 — leeg als nog niet bekend)" ""
 
-cat > "$ROOT/config/project.env" <<EOF
-# Projectgegevens — automatisch geschreven door bin/init-project.sh.
-WEBTREES_TREE=$WEBTREES_TREE
-WEBTREES_URL=$WEBTREES_URL
-ROOT_XREF=$ROOT_XREF
-ROOT_NAME=$ROOT_NAME
-EOF
+# %q zodat waarden met spaties/aanhalingstekens veilig te sourcen zijn:
+# dit bestand wordt door bin/_common.sh met `.` ingelezen.
+{
+    printf '# Projectgegevens — automatisch geschreven door bin/init-project.sh.\n'
+    printf 'WEBTREES_TREE=%q\n' "$WEBTREES_TREE"
+    printf 'WEBTREES_URL=%q\n' "$WEBTREES_URL"
+    printf 'ROOT_XREF=%q\n' "$ROOT_XREF"
+    printf 'ROOT_NAME=%q\n' "$ROOT_NAME"
+} > "$ROOT/config/project.env"
 ok "geschreven: config/project.env"
 
 STB_TREE="$WEBTREES_TREE" STB_URL="$WEBTREES_URL" STB_XREF="$ROOT_XREF" STB_NAME="$ROOT_NAME" \
