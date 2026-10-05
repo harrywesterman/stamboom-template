@@ -65,23 +65,21 @@ bijwerken en verwijderen.
 
 1. **Vinden:** `OBJE`-regels in `get-record(..., format='gedcom')` → media-XREF (`X…`).
 2. **Metadata:** `webtrees_mcp-server_get-media(tree, xref)` → `filename` (volledig
-   relatief opslagpad, bv. `api-media/ab12…/naam.png`), `title`, `url`, `pending`.
-3. **Bytes op volledige resolutie:** de MCP geeft geen bytes. Gebruik de authenticated
-   REST-route en lees het bestand daarna met de `read`-tool:
-
-```bash
-curl -sS -H "Authorization: Bearer $TOKEN" -o /tmp/scan.png \
-  "{{WEBTREES_URL}}/api/media/download?tree={{TREE}}&xref=X13016&filename=<url-encoded-pad>"
-```
-
-4. **Uploaden:** ≤ 512 KiB → `upload-media` met `local-path` (nooit bytes verzinnen).
-   Groter → `upload-media-chunk`. Max. 20 MiB, JPEG/PNG/GIF/WebP.
+   relatief opslagpad, bv. `api-media/ab12…/naam.png`), `title`, `url`, `pending`, plus
+   kortlevende signed `preview-url` (thumbnail) en `content-url` (origineel).
+3. **Bytes op volledige resolutie:** `webtrees_mcp-server_download-media(...)` met de
+   `filename` uit `get-media`. De bridge volgt de signed `content-url`, verifieert de
+   SHA-256 en schrijft het bestand naar een tijdelijk pad; lees de teruggegeven
+   `local-path` daarna met de `read`-tool. Geen base64, geen handmatige `curl`.
+4. **Uploaden:** `upload-media` met `local-path` (nooit bytes verzinnen). De bridge regelt
+   alle formaten t/m 20 MiB via een single-use signed URL; `upload-media-chunk` bestaat
+   niet meer. Max. 20 MiB, JPEG/PNG/GIF/WebP/PDF.
 5. **Koppelen:** `link-media` met `target-type` INDI/FAM/SOUR.
 6. **Max. één media-write per record per pending-periode.** Een tweede poging geeft HTTP
    **409** ("Record has pending changes") tot een moderator de eerste heeft goedgekeurd.
    De 409 gaat vóór de groottevalidatie.
 
-Volledige details, chunk-protocol en valkuilen: `docs/werkwijze/webtrees-media.md`.
+Volledige details en valkuilen: `docs/werkwijze/webtrees-media.md`.
 
 ## 5. Records wijzigen
 

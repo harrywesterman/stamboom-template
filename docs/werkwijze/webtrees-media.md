@@ -1,8 +1,9 @@
 # webtrees: media
 
 Alles met afbeeldingen/media gaat via de **webtrees-MCP** — niet via de browser en niet via
-handgemaakte URL's. Eén ding gaat bewust buiten de MCP: de **bytes** ophalen (volledige
-resolutie), want de MCP geeft alleen metadata.
+handgemaakte URL's. De MCP geeft ook de **bytes** (volledige resolutie): de lokale bridge
+volgt een kortlevende signed URL en schrijft het bestand naar een tijdelijk pad, zodat er
+geen base64 door het model gaat.
 
 ## 1. Media-XREF vinden
 
@@ -23,47 +24,42 @@ Check dus altijd beide.
 ## 2. Metadata en bytes
 
 1. `webtrees_mcp-server_get-media(tree, xref)` → `filename` (het **volledige relatieve
-   opslagpad**, bv. `api-media/ab12…/naam.png`), `title`, `url`, `pending`.
-2. Bytes op volledige resolutie via de authenticated downloadroute (URL-encode de `filename`):
+   opslagpad**, bv. `api-media/ab12…/naam.png`), `title`, `url`, `pending`, plus een
+   kortlevende signed `preview-url` (begrensde JPEG-thumbnail) en `content-url` (origineel;
+   HMAC-ondertekend, purpose-bound, **5 minuten** geldig).
+2. Bytes op volledige resolutie via `webtrees_mcp-server_download-media(...)` met de
+   `filename` uit `get-media`. De bridge volgt de signed `content-url`, verifieert de
+   SHA-256 en schrijft het bestand naar een tijdelijk pad. Het antwoord bevat `local-path`,
+   `bytes` en `sha256` — **geen base64**.
+3. Lees het bestand via `local-path` met de `read`-tool. Het model kan oud handschrift,
+   Kurrent/Sütterlin en historische kaarten lezen.
 
-```bash
-curl -sS -H "Authorization: Bearer $TOKEN" -o /tmp/scan.png \
-  "{{WEBTREES_URL}}/api/media/download?tree={{TREE}}&xref=X13016&filename=api-media%2Fab12...%2Fnaam.png"
-```
+De mediapagina toont alleen een **thumbnail** (~400 px); `content-url`/download geeft
+volledige resolutie (vaak 2000–4000+ px breed). Voor lange documenten: knip de afbeelding in
+stukken met ImageMagick (`magick scan.png -crop WxH+X+Y +repage deel.jpg`) en bekijk de delen
+apart.
 
-3. Lees het bestand met de `read`-tool om het echt te bekijken. Het model kan oud
-   handschrift, Kurrent/Sütterlin en historische kaarten lezen.
-
-De mediapagina toont alleen een **thumbnail** (~400 px); de download geeft volledige
-resolutie (vaak 2000–4000+ px breed). Voor lange documenten: knip de afbeelding in stukken
-met ImageMagick (`magick scan.png -crop WxH+X+Y +repage deel.jpg`) en bekijk de delen apart.
+**Compatibiliteits-fallback** (meestal niet nodig): authenticated REST
+`GET {{WEBTREES_URL}}/api/media/download?tree={{TREE}}&xref=X…&filename=<url-encoded-pad>`,
+of volg de signed `content-url` rechtstreeks.
 
 ## 3. Uploaden
 
-- **≤ 512 KiB** → `upload-media` met inline base64 (`content-base64`). Verzin **nooit** bytes:
-  lees het bestand en codeer het (`base64 -i bestand.jpg`), verifieer desnoods met
-  `shasum -a 256`.
-- **> 512 KiB t/m 20 MiB** → `upload-media-chunk`:
-  - per chunk: `upload-id` (8 hex Unix-timestamp + 24 random hex = 32 hex), `offset`,
-    `total-bytes`, `sha256` (van het **hele** bestand), `final`, en `content-base64`
-    van max. **256 KiB gedecodeerd** (262.144 bytes);
-  - de metadata (`tree`, `target-xref`, `target-type`, `filename`, `title`) moet bij **élke**
-    chunk identiek zijn;
-  - de laatste chunk (`final: true`) verifieert de SHA-256 en maakt het pending mediarecord
-    + de koppeling aan;
-  - exacte chunk-retries en exacte final-replay zijn veilig (idempotent); een sessie verloopt
-    1 uur na de `upload-id`-timestamp;
-  - de eerste call begint op `offset: 0`; `next-offset` in het antwoord bevestigt de
-    opgeslagen bytes;
-  - bij een **onzekere commit (409)**: verifiëren met een beheerder en **niet** opnieuw
-    proberen met een nieuw ID.
+- **Standaard:** `upload-media` met `local-path` (een absoluut pad binnen
+  `WEBTREES_UPLOAD_ROOTS`). De bridge leest en hasht het bestand, vraagt
+  `create-media-upload` om een **single-use signed URL** en `PUT` de onbewerkte bytes
+  daarheen. Geen base64, geen chunks, geen `api_write`. Verzin **nooit** bytes.
+- `create-media-upload` wordt door de bridge zelf gebruikt en is **niet** aan het model
+  blootgesteld. `upload-media-chunk` bestaat niet meer; gebruik na een transportfout
+  `upload-media-status` om een eigen upload te inspecteren **zonder** opnieuw te uploaden.
+- **Compatibiliteits-fallback** (meestal niet nodig): directe MCP-clients kunnen inline
+  base64 (`content-base64`) t/m 512 KiB gebruiken; authenticated REST `POST /api/media`
+  (multipart: `tree`, `target-xref`, `target-type`, `title`, `date`, `file`) blijft bestaan.
 - Te grote inline base64 → nette **413**: `inline_upload_too_large`,
   `maxInlineBytes: 524288`, `multipartEndpoint: /api/media`, `requiredScope: api_write`.
-- Toegestaan: JPEG, PNG, GIF, WebP; MIME-type moet bij de extensie passen; max. 20 MiB en
-  40 megapixels; veilige bestandsnaam (geen pad); geen SVG/PDF of corrupte bestanden.
-
-**Compatibiliteits-fallback** (meestal niet nodig): authenticated REST `POST /api/media`
-(multipart: `tree`, `target-xref`, `target-type`, `title`, `date`, `file`).
+- Toegestaan: JPEG, PNG, GIF, WebP en **PDF** (PDF wordt ongewijzigd opgeslagen zonder te
+  decoderen). MIME-type moet bij de extensie passen; max. 20 MiB en 40 megapixels; veilige
+  bestandsnaam (geen pad); geen SVG/TIFF of corrupte bestanden.
 
 ## 4. Koppelen, ontkoppelen, bijwerken, verwijderen
 
