@@ -52,3 +52,9 @@ schrijf-antwoord).
 Foutresponsen gebruiken `error.code` (de lokale bridge behoudt die): o.a. `token_invalid`,
 `scope_missing`, `pending_conflict`, `protected_links_would_be_removed` en
 `inline_upload_too_large`.
+
+De **403**-set is fijnmaziger: `record_privacy_denied` (privacy-instelling),
+`record_access_denied` (geen toegang tot het record), `scope_missing` (ontbrekende
+scope/media-rechten) en anders `access_denied`. Een expliciete `code:`-prefix in de melding
+wordt overgenomen. Fouten van webtrees zelf worden nu ongewijzigd doorgegeven (code +
+message) in plaats van vervangen door een algemene melding.

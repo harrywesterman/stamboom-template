@@ -52,6 +52,10 @@ of volg de signed `content-url` rechtstreeks.
 - `create-media-upload` wordt door de bridge zelf gebruikt en is **niet** aan het model
   blootgesteld. `upload-media-chunk` bestaat niet meer; gebruik na een transportfout
   `upload-media-status` om een eigen upload te inspecteren **zonder** opnieuw te uploaden.
+- Een gestagede upload is **gebonden aan de geauthenticeerde webtrees-gebruiker** die
+  `create-media-upload` aanriep: de PUT-route logt die identiteit opnieuw in. Ontbreekt de
+  gebruiker of is die onbekend, dan volgt **403** (`access_denied`) en wordt er niets
+  opgeslagen.
 - **Compatibiliteits-fallback** (meestal niet nodig): directe MCP-clients kunnen inline
   base64 (`content-base64`) t/m 512 KiB gebruiken; authenticated REST `POST /api/media`
   (multipart: `tree`, `target-xref`, `target-type`, `title`, `date`, `file`) blijft bestaan.
