@@ -29,7 +29,7 @@ done
 check_prereqs() {
     log "prerequisites"
     local missing=0
-    for cmd in git node npx python3; do
+    for cmd in git node npx python3 uv; do
         if command -v "$cmd" >/dev/null 2>&1; then
             ok "$cmd"
         else
@@ -37,7 +37,7 @@ check_prereqs() {
             missing=1
         fi
     done
-    for cmd in pipx uv magick gh; do
+    for cmd in pipx magick gh; do
         if command -v "$cmd" >/dev/null 2>&1; then
             ok "$cmd (optioneel)"
         else
@@ -45,6 +45,15 @@ check_prereqs() {
         fi
     done
     [ "$missing" = "0" ] || die "installeer de ontbrekende verplichte tools en probeer opnieuw"
+
+    # De webtrees-API bridge (bin/webtrees-mcp.mjs) vereist Node 22+.
+    local node_major
+    node_major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
+    if [ "$node_major" -ge 22 ]; then
+        ok "node $node_major (>= 22)"
+    else
+        warn "node $node_major < 22 — de webtrees-API bridge vereist Node 22+"
+    fi
 }
 
 # --- 2. secrets -------------------------------------------------------------

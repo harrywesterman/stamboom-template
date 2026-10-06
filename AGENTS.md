@@ -12,13 +12,14 @@ Dit bestand beschrijft **hoe je werkt**, niet wat er al gevonden is. Bevindingen
 |---|---|---|
 | webtrees | `webtrees_mcp-server_*` | de boom zelf: personen, gezinnen, media, wijzigingen |
 | Open Archieven | `openarchieven_*` | Nederlandse BS-akten (geboorte/huwelijk/overlijden) |
+| Gelders Archief | `archiefakte_*` | akten zoeken + volledige registerscans downloaden |
 | Delpher | `newspapers_*` | kranten (KB) |
 | FamilySearch | `familysearch_*` | volledige-tekstzoekopdracht, afbeeldingen, record search |
 | OCR | `ocr_*` + `bin/ocr-handschrift.sh` | oude handschriften (17e–19e eeuw) |
 | nl-gov | `nl-gov-mcp_*` | BAG, kadaster, CBS, wetgeving |
 | Playwright | `playwright_browser_*` | laatste redmiddel voor webinterfaces |
 
-Details: `docs/werkwijze/{webtrees-media,openarchieven,delpher,familysearch,ocr}.md`.
+Details: `docs/werkwijze/{webtrees-media,webtrees-records,archiefakte,openarchieven,delpher,familysearch,ocr}.md`.
 
 ## 2. CRITICAL: de boom IS het werk van de gebruiker
 
@@ -83,14 +84,24 @@ Volledige details en valkuilen: `docs/werkwijze/webtrees-media.md`.
 
 ## 5. Records wijzigen
 
-`modify-record` **vervangt het hele GEDCOM-record**. Alles wat je niet meegeeft, verdwijnt.
+De schrijftools komen uit de webtrees-MCP; details in `docs/werkwijze/webtrees-records.md`.
 
-- **Neem `FAMC` en álle `FAMS`-regels letterlijk over** uit
-  `get-record(format='gedcom')`. De tool behoudt familiekoppelingen **niet** automatisch —
-  dit is één keer echt misgegaan: na een `modify-record` verdween `1 FAMS @F26@` en leek
-  het gezin van de persoon te zijn verdwenen, terwijl het F-record nog bestond.
-- **Pending changes:** een wijziging komt in de goedkeuringswachtrij. `get-record` blijft de
-  oude versie tonen. Vraag de gebruiker om goedkeuring en verifieer daarna.
+- **`modify-record` vervangt het hele GEDCOM-record**, maar **beschermde links blijven
+  behouden**: bestaande `FAMS`/`FAMC`/`OBJE`/`CHIL` verdwijnen **niet** meer stilzwijgend.
+  Wil je zo'n link echt weghalen, geef dan `remove-protected-links=true` mee. Gebruik
+  `dry-run=true` om het resultaat te bekijken vóór je schrijft.
+- **Bronnen en citaten:** `create-source` / `modify-source` / `get-sources` voor
+  `SOUR`-records; `add-source-citation` koppelt één of meer bronnen in één pending change
+  (geef `citations: [...]` mee, of `dry-run=true` om te previewen); `get-citations` leest
+  bestaande citaten.
+- **Nieuwe personen/gezinnen:** `add-child-to-family` maakt een **nieuw** kind (een `CHIL`-
+  regel naar een bestaand persoon wordt geweigerd — gebruik daarvoor `link-child-to-family`);
+  `add-family` maakt partners, kinderen en alle FAMS/FAMC/CHIL-links in één transactie.
+- **Pending changes:** elke wijziging komt in de goedkeuringswachtrij. `get-record` blijft de
+  oude versie tonen. `list-pending-changes` pagineert (`limit`/`offset`, `summary=true`,
+  `total`); `verify-write` controleert de status (`pending`/`applied`/`deleted`) met de
+  SHA-256-hash (`hash` of `version`) uit het schrijf-antwoord. Vraag de gebruiker om
+  goedkeuring en verifieer daarna.
 - **Nooit twee keer dezelfde write op één record** — dat levert dubbele pending changes op
   die dubbel toegepast kunnen worden.
 - Bij meerdere writes op één record: **eerst de media-changes** laten goedkeuren, daarna de
@@ -106,6 +117,21 @@ Volledige details en valkuilen: `docs/werkwijze/webtrees-media.md`.
 - Formaten: IIIF-image `https://images.memorix.nl/gra/iiif/{IMAGEID}/full/full/0/default.jpg`;
   A2A-identifier `{archive}:{uuid}`, bv. `gra:8d4a775c-…`.
 - **Niet alles is gedigitaliseerd** — veel overlijdensakten (vooral na 1877) ontbreken.
+
+### Gelders Archief (archiefakte-mcp)
+- **Tools:** `search_acts` (naam/plaats/jaar/type), `get_record` (genormaliseerd record met
+  aktenummer en bronpermalink), `inspect_register` (álle scans van een register ontdekken),
+  `resolve_act_scan`, `download_scan`, `download_act`.
+- **Zoeken** loopt via de Open Archieven 1.1 API; **scans** komen rechtstreeks van het
+  Gelders Archief (permalink, zonder browser). `inspect_register` geeft pas `complete=true`
+  als discovery het vastgestelde totaal en de volgorde heeft gevalideerd.
+- **Downloaden** gaat naar `GA_DATA_DIR` (default in `TOOLS_DIR`), met sidecar-provenance
+  (SHA-256, dimensies, bron-URL). `download_act` downloadt alleen een `FOUND`-koppeling;
+  anders `files=[]` met bewijs. Een expliciet `scan_sequence` geeft status `SELECTED` — dat
+  is **geen** bewezen akte→scan-match.
+- De resolver staat standaard **uit** (geen OCR); `resolve_act_scan` is conservatief en
+  bevestigt niets automatisch. Optionele readers: `tesseract`, `kraken`, `hybrid`.
+- Details: `docs/werkwijze/archiefakte.md`.
 
 ### Delpher (kranten)
 - **Query-syntax is kritisch.** Gebruik **PROX** voor twee termen:
@@ -137,7 +163,8 @@ Diepere details: `docs/werkwijze/`.
 0. **Lees eerst** het volledige bestaande record + familie-records + notities (sectie 2).
 1. **Check webtrees:** `get-record(xref, format='gedcom')` — noteer alle OBJE, OCCU, NOTE,
    FAMS/FAMC.
-2. **Zoek in de bronnen:** Open Archieven (akten), Delpher (kranten), FamilySearch, nl-gov.
+2. **Zoek in de bronnen:** Open Archieven (akten), archiefakte (registerscans Gelders
+   Archief), Delpher (kranten), FamilySearch, nl-gov.
 3. **Verifieer of de scan al in webtrees zit** (persoon **én** partner, en het F-record)
    vóórdat je downloadt.
 4. **Documenteer:** leg vast in `docs/onderzoek/` en scheid expliciet "stond al in webtrees"
@@ -160,7 +187,9 @@ Dé plek voor bevindingen is `docs/onderzoek/`. **Niet** in dit bestand.
   F-record.
 - **Nooit** blind aktes downloaden — check eerst of de scan al in de boom zit.
 - **Huwelijksakten hangen vaak aan het F-record**, niet aan de I-records.
-- **`modify-record` laat FAMS/FAMC vallen** als je ze niet expliciet meegeeft.
+- **`modify-record` behoudt beschermde links** (FAMS/FAMC/OBJE/CHIL) standaard; alleen met
+  `remove-protected-links=true` verdwijnen ze. Controleer het resultaat met `dry-run` of
+  `verify-write`.
 - **Eén media-write per record per pending-periode** (409).
 - **`curl -F "note=…"` kapt af bij de eerste `;`** — vermijd puntkomma's in form-velden, of
   zet de volledige tekst later via `update-media`.

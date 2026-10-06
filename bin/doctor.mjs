@@ -204,6 +204,10 @@ const kraken = join(ocrModels, '.venv-kraken', 'bin', 'kraken');
 if (existsSync(kraken)) ok('kraken', kraken);
 else warn('kraken', 'venv ontbreekt — draai ./setup.sh');
 
+const archiefakte = join(toolsDir, 'archiefakte-mcp');
+if (existsSync(join(archiefakte, 'uv.lock'))) ok('archiefakte-mcp', archiefakte);
+else warn('archiefakte-mcp', `${archiefakte} ontbreekt — draai ./setup.sh`);
+
 const fsSession = join(homedir(), '.familysearch-mcp', 'config.json');
 if (existsSync(fsSession)) ok('familysearch-sessie', fsSession);
 else warn('familysearch-sessie', 'nog niet ingelogd — gebruik de MCP-tool familysearch_login-with-browser');

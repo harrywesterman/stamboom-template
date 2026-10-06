@@ -1,5 +1,5 @@
 {
-  "_comment": "ENIGE bron van waarheid voor MCP-servers en de tools die ze nodig hebben. Placeholders: ${TOOLS_DIR} ${HOME} ${WEBTREES_URL} ${WEBTREES_TREE} ${UPLOAD_ROOTS} ${OCR_MODELS} ${CHROME_PATH}. ${TOKEN} wordt NIET door de renderer ingevuld maar per client als env-referentie geemit.",
+  "_comment": "ENIGE bron van waarheid voor MCP-servers en de tools die ze nodig hebben. Placeholders: ${TOOLS_DIR} ${HOME} ${WEBTREES_URL} ${WEBTREES_TREE} ${UPLOAD_ROOTS} ${OCR_MODELS} ${GA_DATA_DIR} ${GA_USER_AGENT} ${CHROME_PATH}. ${TOKEN} wordt NIET door de renderer ingevuld maar per client als env-referentie geemit. Let op: _vars worden alleen tegen de env-bestanden geexpand, niet tegen elkaar — zet samengestelde defaults in de server-environment.",
   "_vars": {
     "TOOLS_DIR": "${TOOLS_DIR:-$HOME/.local/share/stamboom-tools}",
     "WEBTREES_URL": "${WEBTREES_URL:-https://www.stamboomwesterman.net}",
@@ -17,7 +17,16 @@
       "update": "pull",
       "build": null,
       "entry": "bin/webtrees-mcp.mjs",
-      "note": "Eigen fork van Jefferson49/webtrees-API. bin/webtrees-mcp.mjs gebruikt alleen Node-builtins, dus geen npm install nodig."
+      "note": "Eigen fork van Jefferson49/webtrees-API. bin/webtrees-mcp.mjs gebruikt alleen Node-builtins (geen npm install), maar vereist Node 22+."
+    },
+    "archiefakte-mcp": {
+      "repo": "https://github.com/harrywesterman/archiefakte-mcp.git",
+      "dir": "archiefakte-mcp",
+      "ref": "main",
+      "update": "pull",
+      "build": "uv sync --frozen",
+      "entry": null,
+      "note": "Python-MCP (uv). Gelders Archief-registerscans + Open Archieven-zoeken. Draait via `uv run --frozen geldersarchief-mcp`; uv sync --frozen bouwt de venv uit uv.lock."
     },
     "familysearch-mcp": {
       "repo": "git@github.com:harrywesterman/familysearch-mcp.git",
@@ -103,6 +112,16 @@
     "nl-gov-mcp": {
       "type": "local",
       "command": ["node", "${TOOLS_DIR}/nl-gov-mcp/dist/src/index.js"],
+      "enabled": true
+    },
+    "archiefakte": {
+      "type": "local",
+      "command": ["uv", "--directory", "${TOOLS_DIR}/archiefakte-mcp", "run", "--frozen", "geldersarchief-mcp"],
+      "environment": {
+        "GA_DATA_DIR": "${GA_DATA_DIR:-${TOOLS_DIR}/archiefakte-mcp/data}",
+        "GA_USER_AGENT": "${GA_USER_AGENT:-${WEBTREES_URL}}"
+      },
+      "timeout": 180000,
       "enabled": true
     },
     "ocr": {

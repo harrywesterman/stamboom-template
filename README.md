@@ -20,10 +20,14 @@ cd mijn-onderzoek
 opencode/codex/Claude Code genereren en een healthcheck draaien.
 Opnieuw draaien is veilig en werkt de tools bij.
 
+Vereist: `git`, `node` (22+), `npx`, `python3` en `uv`. Optioneel: `pipx`,
+ImageMagick (`magick`) en `gh`.
+
 ## Wat het oplevert
 
-- **MCP-servers** voor webtrees, Open Archieven, Delpher (kranten), FamilySearch,
-  OCR van handschriften (kraken/ARletta), nl-gov, Playwright en Context7.
+- **MCP-servers** voor webtrees, Open Archieven, Gelders Archief (archiefakte-mcp),
+  Delpher (kranten), FamilySearch, OCR van handschriften (kraken/ARletta), nl-gov,
+  Playwright en Context7.
 - **Werkwijze** in `AGENTS.md` — hoe je onderzoekt, welke bronnen wel/niet werken, en de
   kritieke regel dat de bestaande boom nooit als "nieuwe vondst" mag worden gepresenteerd.
 - **Onderzoekslog** in `docs/onderzoek/`, één dossier per persoon.

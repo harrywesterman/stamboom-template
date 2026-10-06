@@ -25,6 +25,7 @@ done
 
 need git
 need node
+need uv
 mkdir -p "$TOOLS_DIR"
 log "tools-map: $TOOLS_DIR (modus: $MODE)"
 
