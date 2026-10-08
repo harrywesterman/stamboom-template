@@ -65,6 +65,17 @@ of volg de signed `content-url` rechtstreeks.
   decoderen). MIME-type moet bij de extensie passen; max. 20 MiB en 40 megapixels; veilige
   bestandsnaam (geen pad); geen SVG/TIFF of corrupte bestanden.
 
+### Meerdere bestanden
+
+Gebruik `upload-media-batch` met `tree` en
+`files: [{local-path, target-xref, target-type, title, note, date}, …]`. Een gezamenlijk
+doel kan ook op het hoogste niveau staan. De bridge controleert alle bestanden vóór
+staging: 1–50 bestanden en maximaal **20 MiB totaal**. Er gaat geen base64 door het model.
+
+Elke signed PUT schrijft afzonderlijk; dit is geen atomaire batch. Als een latere PUT
+faalt, rapporteert de bridge de voltooide media-XREF's. Controleer die en de uploadstatus
+vóór een herhaling. Upload-URLs zijn single-use en tien minuten geldig.
+
 ## 4. Koppelen, ontkoppelen, bijwerken, verwijderen
 
 `link-media` (target-type `INDI`/`FAM`/`SOUR`), `unlink-media`, `update-media`,
@@ -72,9 +83,14 @@ of volg de signed `content-url` rechtstreeks.
 
 ## Valkuilen
 
-- **Max. één media-write per record per pending-periode.** Een tweede poging geeft HTTP
-  **409** ("Record has pending changes") tot een moderator de eerste heeft goedgekeurd.
-  De 409 gaat vóór de groottevalidatie.
+- Media-upload, koppelingen en metadata bouwen voort op de **nieuwste pending versie**
+  en behouden eerdere pending feiten/links. Een verouderde gelijktijdige write geeft
+  **409**, met waar beschikbaar de blokkerende `change-id` en `xref`. Herlaad en
+  controleer de eerdere write vóór een nieuwe poging. Pending verwijderingen en private
+  feiten kunnen wijzigingen blokkeren.
+- Zowel staging als PUT vereisen een editor zonder moderatorrechten en automatische
+  goedkeuring uit. Bewaar de hashes uit het write-antwoord en verifieer ieder gewijzigd
+  record met `verify-write` en `matches=true`.
 - **`curl -F "note=…"` kapt af bij de eerste `;`** (puntkomma wordt als parameter-scheiding
   gezien). Gebruik geen `;` in `-F note=...`, of zet de volledige tekst later via
   `update-media`.

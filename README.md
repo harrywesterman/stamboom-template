@@ -64,6 +64,18 @@ in via de MCP-tool `familysearch_login-with-browser`.
 ./bin/doctor.sh         # idem, direct
 ```
 
+Alleen de webtrees-bridge bijwerken:
+
+```bash
+./bin/install-tools.sh --update --only webtrees-API --skip-extra
+```
+
+De integratie is bijgewerkt voor [webtrees-API `119809d`](https://github.com/harrywesterman/webtrees-API/commit/119809d)
+(8 oktober 2026). Herstart de MCP-client na het bijwerken om de nieuwe bridge en toolschemas
+te laden. De PHP-module op de webtrees-server wordt hiermee niet geïnstalleerd; werk die
+afzonderlijk bij voor de nieuwe serverfuncties. Zie de werkwijze voor
+[records](docs/werkwijze/webtrees-records.md) en [media](docs/werkwijze/webtrees-media.md).
+
 ## Nieuw project binnen een bestaande kloon
 
 ```bash

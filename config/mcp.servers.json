@@ -17,7 +17,7 @@
       "update": "pull",
       "build": null,
       "entry": "bin/webtrees-mcp.mjs",
-      "note": "Eigen fork van Jefferson49/webtrees-API. bin/webtrees-mcp.mjs gebruikt alleen Node-builtins (geen npm install), maar vereist Node 22+."
+      "note": "Eigen fork van Jefferson49/webtrees-API. bin/webtrees-mcp.mjs gebruikt alleen Node-builtins (geen npm install), maar vereist Node 22+. Integratie bijgewerkt voor master 119809d (2026-10-08): merge-writes, create-records en lokale media-batches."
     },
     "archiefakte-mcp": {
       "repo": "https://github.com/harrywesterman/archiefakte-mcp.git",

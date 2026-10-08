@@ -76,9 +76,11 @@ bijwerken en verwijderen.
    alle formaten t/m 20 MiB via een single-use signed URL; `upload-media-chunk` bestaat
    niet meer. Max. 20 MiB, JPEG/PNG/GIF/WebP/PDF.
 5. **Koppelen:** `link-media` met `target-type` INDI/FAM/SOUR.
-6. **Max. één media-write per record per pending-periode.** Een tweede poging geeft HTTP
-   **409** ("Record has pending changes") tot een moderator de eerste heeft goedgekeurd.
-   De 409 gaat vóór de groottevalidatie.
+6. **Media-writes bouwen voort op de nieuwste pending versie.** Bestaande pending feiten
+   en links blijven behouden. Een verouderde gelijktijdige write geeft **409**: laad de
+   actuele versie opnieuw en controleer de eerdere write vóór je opnieuw schrijft.
+   `upload-media-batch` accepteert lokale bestanden met een doel per bestand; elke PUT
+   schrijft afzonderlijk. Controleer bij gedeeltelijk succes de voltooide media-XREF's.
 
 Volledige details en valkuilen: `docs/werkwijze/webtrees-media.md`.
 
@@ -102,10 +104,14 @@ De schrijftools komen uit de webtrees-MCP; details in `docs/werkwijze/webtrees-r
   `total`); `verify-write` controleert de status (`pending`/`applied`/`deleted`) met de
   SHA-256-hash (`hash` of `version`) uit het schrijf-antwoord. Vraag de gebruiker om
   goedkeuring en verifieer daarna.
-- **Nooit twee keer dezelfde write op één record** — dat levert dubbele pending changes op
-  die dubbel toegepast kunnen worden.
-- Bij meerdere writes op één record: **eerst de media-changes** laten goedkeuren, daarna de
-  record-edit.
+- **Herhaal nooit blind dezelfde write.** Bewaar de hash en verifieer met `matches=true`;
+  controleer bij meerdere gewijzigde records elke entry in `records` afzonderlijk.
+  Zonder verwachte hash is `matches=null` alleen een statuslezing.
+- `modify-record(mode=merge)` voegt complete feitblokken toe aan de nieuwste pending versie.
+  Voor vervanging blijft beoordeling van bestaande pending changes nodig.
+- `create-records` maakt 1–100 records atomair met lokale IDs en expliciete wederzijdse
+  links. Bewaar dezelfde `idempotency-key` voor een herhaling van exact dezelfde payload;
+  goedkeuring blijft per record. Zie `docs/werkwijze/webtrees-records.md`.
 
 ## 6. Bronnen: wat wel en niet werkt
 
@@ -190,7 +196,8 @@ Dé plek voor bevindingen is `docs/onderzoek/`. **Niet** in dit bestand.
 - **`modify-record` behoudt beschermde links** (FAMS/FAMC/OBJE/CHIL) standaard; alleen met
   `remove-protected-links=true` verdwijnen ze. Controleer het resultaat met `dry-run` of
   `verify-write`.
-- **Eén media-write per record per pending-periode** (409).
+- Media-writes en merge gebruiken de nieuwste pending versie; bij een verouderde snapshot
+  volgt **409**. Controleer de eerdere write en herlaad vóór een nieuwe poging.
 - **`curl -F "note=…"` kapt af bij de eerste `;`** — vermijd puntkomma's in form-velden, of
   zet de volledige tekst later via `update-media`.
 - **Playwright is het laatste redmiddel**, niet de standaard: de MCP's dekken vrijwel alles.
